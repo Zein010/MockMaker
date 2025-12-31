@@ -1,6 +1,8 @@
 import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
- const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
@@ -8,6 +10,7 @@ import User from '../models/User.js';
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const login = async (req, res) => {
   try {
@@ -39,12 +42,10 @@ export const login = async (req, res) => {
 export const register = async (req, res) => {
   try {
     const {name, email, password } = req.body;
-    {
-        // i just put this inside branckets for to have it's own scope (const user not effecting the const user outside)
-        const user = await User.findOne({ email });
-        if (user) {
-            return res.status(403).json({ message: "Email already used, kindly use a different email or reset password" });
-        }
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        return res.status(400).json({ message: "Email already used, kindly use a different email" });
     }
    const user= await  User.create({name,email,password:bcrypt.hashSync(password,12)});
     const token = jwt.sign(
@@ -64,5 +65,6 @@ export const register = async (req, res) => {
   }
 };
 
-const userController={getAllUsers,login};
+
+const userController = { getAllUsers, login, register };
 export default userController;
